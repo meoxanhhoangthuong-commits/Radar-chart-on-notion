@@ -120,8 +120,10 @@ const ColorUtil = (() => {
    embed keeps its data between Notion page loads.
    ============================================================================ */
 const StorageService = (() => {
-  const KEY = 'radar-widget-state-v1';
+  const characterId =
+    new URLSearchParams(window.location.search).get("id") || "default";
 
+  const KEY = `radarWidget.state.${characterId}`;
   function defaultState() {
     return {
       theme: 'light',
