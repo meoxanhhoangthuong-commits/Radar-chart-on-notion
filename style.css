@@ -1,0 +1,443 @@
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --surface: rgba(255,255,255,0.86);
+  --surface-solid: #ffffff;
+  --glass-bg: rgba(255,255,255,0.66);
+  --glass-border: rgba(15,15,20,0.08);
+  --text-primary: #17181c;
+  --text-secondary: rgba(23,24,28,0.52);
+  --text-tertiary: rgba(23,24,28,0.34);
+  --border: rgba(15,15,20,0.09);
+  --border-strong: rgba(15,15,20,0.16);
+  --accent: #5B5FEF;
+  --accent-soft: rgba(91,95,239,0.12);
+  --danger: #E5484D;
+  --shadow-fab: 0 6px 20px rgba(20,20,30,0.14), 0 1px 2px rgba(20,20,30,0.08);
+  --shadow-panel: -24px 0 60px rgba(20,20,30,0.10);
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+html[data-theme="dark"]{
+  --surface: rgba(28,28,32,0.86);
+  --surface-solid: #1c1c20;
+  --glass-bg: rgba(24,24,28,0.62);
+  --glass-border: rgba(255,255,255,0.08);
+  --text-primary: #F2F2F5;
+  --text-secondary: rgba(242,242,245,0.56);
+  --text-tertiary: rgba(242,242,245,0.36);
+  --border: rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.18);
+  --accent: #8A8DF7;
+  --accent-soft: rgba(138,141,247,0.16);
+  --shadow-fab: 0 6px 22px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-panel: -24px 0 60px rgba(0,0,0,0.35);
+}
+
+/* ============================================================
+   RESET / BASE — page stays fully transparent for Notion embed
+   ============================================================ */
+*, *::before, *::after{ box-sizing: border-box; }
+
+html, body{
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button{ font-family: inherit; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* ============================================================
+   STAGE — the chart is the hero, centered, ~85% of viewport
+   ============================================================ */
+.stage{
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4vh 4vw;
+}
+
+.chart-frame{
+  position: relative;
+  width: min(88vw, 88vh, 900px);
+  height: min(88vw, 88vh, 900px);
+}
+
+#radarCanvas{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ============================================================
+   FLOATING SETTINGS BUTTON
+   ============================================================ */
+.fab{
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--shadow-fab);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease, color .2s ease;
+  z-index: 30;
+}
+.fab svg{ width: 20px; height: 20px; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+.fab:hover{
+  transform: translateY(-2px) scale(1.05);
+  color: var(--text-primary);
+  box-shadow: 0 10px 28px rgba(20,20,30,0.18), 0 2px 4px rgba(20,20,30,0.10);
+}
+.fab:hover svg{ transform: rotate(45deg); }
+.fab:active{ transform: translateY(0) scale(0.97); }
+.fab.is-active{ color: var(--accent); }
+
+/* ============================================================
+   SCRIM — invisible click-catcher to close the panel
+   ============================================================ */
+.scrim{
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+.scrim.visible{ opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   SETTINGS PANEL — glassmorphism, slides from the right
+   ============================================================ */
+.panel{
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(380px, 92vw);
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-left: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  transform: translateX(105%);
+  transition: transform .4s cubic-bezier(.16,1,.3,1);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel.open{ transform: translateX(0); }
+
+.panel-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 22px 16px;
+  flex-shrink: 0;
+}
+.panel-header h2{
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.panel-header-actions{ display: flex; gap: 6px; }
+
+.icon-btn{
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+.icon-btn:hover{ background: var(--border); color: var(--text-primary); }
+.icon-btn svg{ width: 17px; height: 17px; }
+
+#themeToggle .icon-moon{ display: none; }
+html[data-theme="dark"] #themeToggle .icon-sun{ display: none; }
+html[data-theme="dark"] #themeToggle .icon-moon{ display: block; }
+
+.panel-body{
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 22px 28px;
+}
+.panel-body::-webkit-scrollbar{ width: 6px; }
+.panel-body::-webkit-scrollbar-thumb{ background: var(--border-strong); border-radius: 4px; }
+
+.panel-section{
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.panel-section:last-child{ border-bottom: none; }
+
+.section-label{
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin: 0 0 14px;
+}
+.section-label-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-label-row .section-label{ margin-bottom: 14px; }
+.skill-count{
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 14px;
+}
+
+/* ---------- Color rows ---------- */
+.color-rows{ display: flex; flex-direction: column; gap: 10px; }
+
+.color-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.color-row .swatch-wrap{ position: relative; width: 26px; height: 26px; flex-shrink: 0; }
+.color-row .swatch{
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px var(--surface-solid);
+}
+.color-row input[type="color"]{
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+}
+.color-row .color-name{
+  font-size: 13px;
+  color: var(--text-primary);
+  width: 64px;
+  flex-shrink: 0;
+}
+.color-row .format-select{
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--border);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.color-row .color-value{
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  color: var(--text-primary);
+  transition: border-color .15s ease;
+}
+.color-row .color-value:focus{
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------- Skills list ---------- */
+.skills-list{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.skill-row{
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(127,127,127,0.03);
+  transition: border-color .2s ease, opacity .3s ease, transform .3s ease;
+}
+.skill-row.entering{ opacity: 0; transform: translateY(-6px) scale(0.98); }
+.skill-row.leaving{ opacity: 0; transform: translateY(-6px) scale(0.98); }
+
+.skill-row-top{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.skill-name-input{
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 2px 0;
+  transition: border-color .15s ease;
+}
+.skill-name-input:hover{ border-bottom-color: var(--border-strong); }
+.skill-name-input:focus{ outline: none; border-bottom-color: var(--accent); }
+
+.skill-delete-btn{
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s ease, color .15s ease;
+}
+.skill-delete-btn svg{ width: 13px; height: 13px; }
+.skill-delete-btn:hover{ background: rgba(229,72,77,0.12); color: var(--danger); }
+.skill-delete-btn:disabled{ opacity: 0.25; cursor: not-allowed; }
+.skill-delete-btn:disabled:hover{ background: transparent; color: var(--text-tertiary); }
+
+.skill-row-bottom{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.skill-slider{
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--_pct, 50%), var(--border) var(--_pct, 50%));
+  outline: none;
+  cursor: pointer;
+}
+.skill-slider::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+.skill-slider::-webkit-slider-thumb:hover{ transform: scale(1.15); }
+.skill-slider::-moz-range-thumb{
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  border: 2px solid var(--accent);
+  cursor: pointer;
+}
+.skill-slider::-moz-range-track{
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.skill-value{
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ---------- Add skill button ---------- */
+.add-skill-btn{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+.add-skill-btn svg{ width: 15px; height: 15px; }
+.add-skill-btn:hover{
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ---------- Data action buttons ---------- */
+.action-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ghost-btn{
+  padding: 10px 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--border);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .18s ease, transform .12s ease;
+}
+.ghost-btn:hover{ background: var(--border-strong); }
+.ghost-btn:active{ transform: scale(0.97); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 560px){
+  .panel{ width: 100vw; border-radius: 0; }
+  .fab{ top: 16px; right: 16px; }
+}
