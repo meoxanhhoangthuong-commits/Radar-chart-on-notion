@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Radar</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       STAGE — holds the radar chart, centered, ~85% of viewport
+  ============================================================= -->
+  <main class="stage">
+    <div class="chart-frame" id="chartFrame">
+      <canvas id="radarCanvas" aria-label="Radar chart"></canvas>
+    </div>
+  </main>
+
+  <!-- ============================================================
+       FLOATING SETTINGS TRIGGER (top-right)
+  ============================================================= -->
+  <button class="fab" id="settingsToggle" aria-label="Open settings" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M19.4 13.5a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V19.5a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H4.5a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V4.5a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1H19.5a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <!-- Invisible scrim — closes the panel on outside click -->
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ============================================================
+       SETTINGS PANEL (slides in from the right)
+  ============================================================= -->
+  <aside class="panel" id="panel" aria-hidden="true">
+
+    <header class="panel-header">
+      <h2>Settings</h2>
+      <div class="panel-header-actions">
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light / dark">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5M18.4 5.6l-1.55 1.55M7.15 16.85 5.6 18.4M18.4 18.4l-1.55-1.55M7.15 7.15 5.6 5.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="icon-btn" id="panelClose" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="panel-body">
+
+      <!-- ---------- Appearance ---------- -->
+      <section class="panel-section">
+        <h3 class="section-label">Appearance</h3>
+        <div class="color-rows" id="colorRows"><!-- injected --></div>
+      </section>
+
+      <!-- ---------- Skills ---------- -->
+      <section class="panel-section">
+        <div class="section-label-row">
+          <h3 class="section-label">Skills</h3>
+          <span class="skill-count" id="skillCount"></span>
+        </div>
+        <div class="skills-list" id="skillsList"><!-- injected --></div>
+        <button class="add-skill-btn" id="addSkillBtn">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Add skill
+        </button>
+      </section>
+
+      <!-- ---------- Data actions ---------- -->
+      <section class="panel-section">
+        <h3 class="section-label">Data</h3>
+        <div class="action-grid">
+          <button class="ghost-btn" id="randomizeBtn">Randomize</button>
+          <button class="ghost-btn" id="resetBtn">Reset</button>
+          <button class="ghost-btn" id="exportBtn">Export JSON</button>
+          <button class="ghost-btn" id="importBtn">Import JSON</button>
+        </div>
+        <input type="file" id="importInput" accept="application/json" hidden />
+      </section>
+
+    </div>
+  </aside>
+
+  <script src="script.js"></script>
+</body>
+</html>
